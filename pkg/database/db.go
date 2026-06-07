@@ -22,7 +22,8 @@ func InitDB(cfg *configs.DBConfig, appEnv string) (*gorm.DB, error) {
 
 	// Adjust GORM logger based on Environment
 	if appEnv == "development" {
-		gormConfig.Logger = gormlogger.Default.LogMode(gormlogger.Info)
+		// Set to gormlogger.Info if you want to see detailed SQL logs
+		gormConfig.Logger = gormlogger.Default.LogMode(gormlogger.Error)
 	} else {
 		gormConfig.Logger = gormlogger.Default.LogMode(gormlogger.Error)
 	}

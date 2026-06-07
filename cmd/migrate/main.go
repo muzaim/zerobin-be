@@ -9,6 +9,8 @@ import (
 	"cellar-backend/internal/modules/user"
 	"cellar-backend/pkg/database"
 	"cellar-backend/pkg/logger"
+
+	gormlogger "gorm.io/gorm/logger"
 )
 
 func main() {
@@ -25,6 +27,9 @@ func main() {
 	if err != nil {
 		logger.Fatal(err, "Failed to connect to database")
 	}
+
+	// Disable verbose SQL logging for migration command
+	db.Logger = db.Logger.LogMode(gormlogger.Error)
 
 	args := os.Args
 	if len(args) < 2 {

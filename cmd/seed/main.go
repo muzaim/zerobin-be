@@ -9,6 +9,7 @@ import (
 	"cellar-backend/pkg/logger"
 
 	"golang.org/x/crypto/bcrypt"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 func main() {
@@ -25,6 +26,9 @@ func main() {
 	if err != nil {
 		logger.Fatal(err, "Failed to connect to database")
 	}
+
+	// Disable verbose SQL logging for seeding command
+	db.Logger = db.Logger.LogMode(gormlogger.Error)
 
 	logger.Info("Starting database seeding...")
 
