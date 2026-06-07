@@ -1,0 +1,468 @@
+Create a production-ready Golang SaaS Starter Kit using the latest stable Go version.
+
+This project will serve as a reusable backend foundation for future SaaS applications and must follow modern industry standards used by professional software teams.
+
+# Core Stack
+
+- Golang latest stable version
+- Gin Framework latest version
+- PostgreSQL
+- GORM
+- Docker Compose
+- Air (hot reload)
+- Swagger
+- Makefile
+
+# Architecture
+
+Implement a scalable clean architecture structure with clear separation of concerns.
+
+Example layers:
+
+- cmd
+- configs
+- internal
+    - modules
+    - middleware
+    - services
+    - repositories
+    - handlers
+    - entities
+    - dto
+    - validators
+    - auth
+    - audittrail
+- pkg
+- docs
+- migrations
+
+The architecture must be easy to scale for multiple modules.
+
+Use dependency injection wherever appropriate.
+
+Avoid tightly coupled code.
+
+Follow:
+
+- SOLID Principles
+- Clean Architecture
+- Repository Pattern
+- Service Layer Pattern
+- DTO Pattern
+
+# Configuration
+
+Use environment-based configuration.
+
+Support:
+
+- development
+- staging
+- production
+
+Use:
+
+- Viper
+- Godotenv
+
+Create centralized configuration management.
+
+# Database
+
+Use PostgreSQL running through Docker Compose.
+
+Provide services:
+
+- postgres
+- pgadmin
+
+inside docker-compose.
+
+# ORM
+
+Use GORM.
+
+Requirements:
+
+- UUID as primary key
+- Soft delete enabled
+- Common base model
+- Automatic timestamps
+
+# Validation
+
+Use:
+
+go-playground/validator
+
+Validation must be handled through request DTOs.
+
+# Logging
+
+Use Zerolog.
+
+Requirements:
+
+- Structured logging
+- Request logging
+- Error logging
+- JSON log format
+- Production-ready log output
+
+# API Response Standard
+
+Create reusable response structures.
+
+Success example:
+
+{
+  "success": true,
+  "message": "User created successfully",
+  "data": {}
+}
+
+Error example:
+
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": {}
+}
+
+# Middleware
+
+Implement:
+
+- Request ID
+- Recovery
+- CORS
+- Logging
+- Authentication middleware placeholder
+
+Every request should automatically receive:
+
+X-Request-ID
+
+# Authentication Foundation
+
+Prepare authentication structure.
+
+Do not implement full authentication yet.
+
+Create foundation for:
+
+- JWT
+- Refresh Token
+- Authentication Middleware
+- Token Utilities
+
+# Authorization
+
+Prepare Casbin integration.
+
+The project must be RBAC-ready.
+
+Example roles:
+
+- Admin
+- Moderator
+- User
+
+# Ownership Authorization
+
+Implement ownership-based authorization.
+
+Requirements:
+
+Users must only be able to access their own resources unless explicitly granted permissions.
+
+Examples:
+
+User A cannot:
+
+- View User B profile
+- Update User B profile
+- Delete User B profile
+- Access User B resources
+
+User B cannot access User A resources.
+
+Implement reusable ownership middleware and authorization layer.
+
+Provide reusable helpers:
+
+- IsOwner()
+- AuthorizeOwnership()
+
+Ownership validation must be reusable across all future modules.
+
+Future modules:
+
+- Foods
+- Blogs
+
+Each module should be able to define:
+
+OwnerID
+
+and automatically enforce ownership checks.
+
+Unauthorized access should return:
+
+403 Forbidden
+
+using standardized API responses.
+
+# Multi Tenant Ready
+
+Prepare the architecture to support future multi-tenant SaaS requirements.
+
+Even if not used initially, the project structure should allow future tenant isolation without major refactoring.
+
+# API Versioning
+
+All APIs must use:
+
+/api/v1
+
+Example:
+
+/api/v1/health
+
+# Swagger
+
+Integrate Swagger documentation.
+
+Requirements:
+
+- Auto-generated Swagger docs
+- Swagger endpoint
+- Swagger annotations
+- Reusable helper/template system
+
+Goal:
+
+When creating a new controller, Swagger documentation should require minimal duplication.
+
+Swagger generation should be simple and developer-friendly.
+
+Provide:
+
+make swagger
+
+# Migration
+
+Implement migration support.
+
+Requirements:
+
+- Versioned migrations
+- Migration CLI
+- Rollback support
+
+Provide Make commands:
+
+make migrate
+make rollback
+
+Additionally create a developer-friendly migration mode.
+
+For development:
+
+make automigrate
+
+should automatically sync new models without manually creating up/down migration files.
+
+# Seeder
+
+Provide:
+
+make seed
+
+for development data.
+
+# Audit Trail Module
+
+Create reusable audit trail module.
+
+Table:
+
+audit_trails
+
+Fields:
+
+- id
+- user_id
+- module
+- action
+- description
+- created_at
+
+Examples:
+
+User created food with ID xxx
+User updated profile
+User deleted reservation xxx
+User created blog post xxx
+
+Requirements:
+
+- Reusable across all modules
+- Easy to call from services
+- Automatically records activities
+- Future-ready for admin activity monitoring
+
+# Health Module
+
+Create initial Health Check module.
+
+Endpoint:
+
+GET /api/v1/health
+
+Response:
+
+{
+  "success": true,
+  "message": "Application is running"
+}
+
+# User Module
+
+Create the first business module.
+
+Entity:
+
+users
+
+Fields:
+
+- id UUID
+- full_name
+- email
+- password
+- created_at
+- updated_at
+- deleted_at
+
+Requirements:
+
+- Entity
+- DTO Request
+- DTO Response
+- Repository
+- Service
+- Handler
+- Validation
+- Swagger Documentation
+- Audit Trail Integration
+
+# User APIs
+
+Implement complete CRUD.
+
+GET    /api/v1/users
+GET    /api/v1/users/:id
+POST   /api/v1/users
+PUT    /api/v1/users/:id
+DELETE /api/v1/users/:id
+
+# Testing Foundation
+
+Implement unit testing foundation.
+
+Use:
+
+- testify
+- mockery
+
+Provide examples for:
+
+- repository tests
+- service tests
+
+Architecture must support easy mocking and testing.
+
+# Developer Experience
+
+Provide:
+
+- Air configuration
+- Swagger setup
+- Docker setup
+- Environment examples
+- Readme
+- Example module implementation
+
+# Makefile
+
+Create commands:
+
+make run
+make build
+make test
+make seed
+make migrate
+make rollback
+make automigrate
+make swagger
+make docker-up
+make docker-down
+make lint
+
+# Docker
+
+Provide:
+
+docker-compose.yml
+
+Services:
+
+- postgres
+- pgadmin
+
+Development environment should be runnable with:
+
+make docker-up
+
+# Code Quality
+
+Requirements:
+
+- Production-ready structure
+- Scalable architecture
+- Reusable SaaS starter foundation
+- Enterprise-grade folder organization
+- Clean code practices
+- Minimal boilerplate
+- Easy module generation
+- Easy maintenance
+- Future-proof architecture
+
+# Final Goal
+
+Generate a complete production-ready Golang SaaS Starter Kit including:
+
+- Project Structure
+- Docker Configuration
+- PostgreSQL Setup
+- GORM Setup
+- Air Setup
+- Swagger Setup
+- Makefile
+- Config Management
+- Logging
+- Validation
+- Middleware
+- JWT Foundation
+- RBAC Foundation
+- Ownership Middleware
+- Audit Trail Module
+- Migration System
+- Seeder System
+- Health Module
+- Full User CRUD Module
+- Testing Foundation
+- Documentation
+
+The generated project should be suitable as a reusable backend template for future SaaS products and enterprise-grade Golang applications.

@@ -1,0 +1,8 @@
+p, admin, /api/v1/*, .*
+p, moderator, /api/v1/*, GET
+p, user, /api/v1/users/:id, GET|PUT
+p, user, /api/v1/health, GET
+
+# Role Inheritance (g = sub, group)
+# Examples:
+# g, admin_user, admin
