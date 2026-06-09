@@ -3,8 +3,6 @@ package middleware
 import (
 	"time"
 
-	"cellar-backend/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
@@ -28,7 +26,6 @@ func Logging() gin.HandlerFunc {
 
 		reqID, _ := c.Get(RequestIDKey)
 
-		// Create a structured log using zerolog
 		logEvent := log.Info().
 			Str("request_id", reqID.(string)).
 			Str("method", method).
@@ -38,10 +35,9 @@ func Logging() gin.HandlerFunc {
 			Str("ip", clientIP)
 
 		if len(c.Errors) > 0 {
-			logEvent.Interface("errors", c.Errors.JSON())
-			logEvent.Msg("Request processed with errors")
+			logEvent.Interface("errors", c.Errors.JSON()).Msg("Request processed with errors")
 		} else {
-			logger.Info("[%s] %s %s - %d in %s", reqID, method, path, status, latency)
+			logEvent.Msg("Request processed")
 		}
 	}
 }

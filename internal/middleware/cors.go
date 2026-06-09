@@ -13,7 +13,6 @@ func CORS(cfg *configs.CORSConfig) gin.HandlerFunc {
 		origin := c.Request.Header.Get("Origin")
 		allowed := false
 
-		// Check if origin is allowed
 		if len(cfg.AllowedOrigins) > 0 && cfg.AllowedOrigins[0] == "*" {
 			allowed = true
 			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")

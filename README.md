@@ -63,7 +63,7 @@ make docker-up
 *Note: A PgAdmin instance is also spun up at `http://localhost:5050` (credentials: `admin@cellar.com` / `admin`).*
 
 ### 3. Run Database Migrations & Seeders
-Create the database schema and populate it with initial seed users (Admin, Moderator, and Standard Users):
+Create the database schema and populate it with initial seed users (Admin and Standard Users):
 ```bash
 make automigrate
 make seed

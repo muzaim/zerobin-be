@@ -1,5 +1,64 @@
 basePath: /api/v1
 definitions:
+  blog.BlogResponse:
+    properties:
+      author:
+        $ref: '#/definitions/user.UserResponse'
+      category:
+        type: string
+      created_at:
+        type: string
+      desc:
+        type: string
+      id:
+        type: string
+      slug:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  blog.CreateBlogRequest:
+    properties:
+      category:
+        enum:
+        - Education
+        - Guides
+        - Stories
+        - Tips
+        type: string
+      desc:
+        minLength: 10
+        type: string
+      title:
+        maxLength: 200
+        minLength: 3
+        type: string
+    required:
+    - category
+    - desc
+    - title
+    type: object
+  blog.UpdateBlogRequest:
+    properties:
+      category:
+        enum:
+        - Education
+        - Guides
+        - Stories
+        - Tips
+        type: string
+      desc:
+        minLength: 10
+        type: string
+      title:
+        maxLength: 200
+        minLength: 3
+        type: string
+    type: object
   response.APIResponse:
     properties:
       data: {}
@@ -8,6 +67,17 @@ definitions:
         type: string
       success:
         type: boolean
+    type: object
+  user.ChangePasswordRequest:
+    properties:
+      current_password:
+        type: string
+      new_password:
+        minLength: 6
+        type: string
+    required:
+    - current_password
+    - new_password
     type: object
   user.CreateUserRequest:
     properties:
@@ -23,13 +93,19 @@ definitions:
       role:
         enum:
         - admin
-        - moderator
         - user
         type: string
     required:
     - email
     - full_name
     - password
+    type: object
+  user.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
     type: object
   user.LoginRequest:
     properties:
@@ -50,6 +126,75 @@ definitions:
       user:
         $ref: '#/definitions/user.UserResponse'
     type: object
+  user.OAuthLoginRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      id_token:
+        type: string
+      provider:
+        enum:
+        - google
+        - apple
+        type: string
+      provider_id:
+        type: string
+    required:
+    - id_token
+    - provider
+    type: object
+  user.PolicyRequest:
+    properties:
+      ptype:
+        enum:
+        - p
+        - g
+        type: string
+      rule:
+        items:
+          type: string
+        minItems: 2
+        type: array
+    required:
+    - ptype
+    - rule
+    type: object
+  user.PolicyRuleResponse:
+    properties:
+      ptype:
+        type: string
+      rule:
+        items:
+          type: string
+        type: array
+    type: object
+  user.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  user.ResendVerificationRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  user.ResetPasswordRequest:
+    properties:
+      password:
+        minLength: 6
+        type: string
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
   user.UpdateUserRequest:
     properties:
       email:
@@ -61,12 +206,13 @@ definitions:
       role:
         enum:
         - admin
-        - moderator
         - user
         type: string
     type: object
   user.UserResponse:
     properties:
+      avatar_url:
+        type: string
       created_at:
         type: string
       email:
@@ -75,10 +221,19 @@ definitions:
         type: string
       id:
         type: string
+      is_verified:
+        type: boolean
       role:
         type: string
       updated_at:
         type: string
+    type: object
+  user.VerifyEmailRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
     type: object
 host: localhost:8080
 info:
@@ -94,14 +249,314 @@ info:
   title: Golang SaaS Starter Kit API
   version: "1.0"
 paths:
-  /health:
-    get:
-      description: Returns if application server is running
+  /admin/policies:
+    delete:
+      consumes:
+      - application/json
+      description: Remove an existing policy or grouping rule from Casbin DB
+      parameters:
+      - description: Policy Rule Details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.PolicyRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove Casbin Policy
+      tags:
+      - Admin Policies
+    get:
+      description: Fetch all policy and grouping rules from Casbin DB
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/user.PolicyRuleResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Casbin Policies
+      tags:
+      - Admin Policies
+    post:
+      consumes:
+      - application/json
+      description: Add a new policy or grouping rule to Casbin DB
+      parameters:
+      - description: Policy Rule Details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.PolicyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add Casbin Policy
+      tags:
+      - Admin Policies
+  /blogs:
+    get:
+      description: Get all blog posts with optional filtering by category, user_id,
+        or title/slug search
+      parameters:
+      - description: Filter by category (Education, Guides, Stories, Tips)
+        in: query
+        name: category
+        type: string
+      - description: Filter by author User UUID
+        in: query
+        name: user_id
+        type: string
+      - description: Search in title or slug
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/blog.BlogResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: List Blogs
+      tags:
+      - Blogs
+    post:
+      consumes:
+      - application/json
+      description: Add a new blog post to the database
+      parameters:
+      - description: Blog Create Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/blog.CreateBlogRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/blog.BlogResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Blog
+      tags:
+      - Blogs
+  /blogs/{id_or_slug}:
+    get:
+      description: Fetch a blog post's details using either its UUID or unique slug
+      parameters:
+      - description: Blog ID or Slug
+        in: path
+        name: id_or_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/blog.BlogResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Get Blog By ID or Slug
+      tags:
+      - Blogs
+  /blogs/{id}:
+    delete:
+      description: Delete a blog post by its UUID
+      parameters:
+      - description: Blog UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Blog
+      tags:
+      - Blogs
+    put:
+      consumes:
+      - application/json
+      description: Modify an existing blog post by its UUID
+      parameters:
+      - description: Blog UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Blog Update Fields
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/blog.UpdateBlogRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/blog.BlogResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Blog
+      tags:
+      - Blogs
+  /health:
+    get:
+      description: Returns if application server is running and database is reachable
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "503":
+          description: Service Unavailable
           schema:
             $ref: '#/definitions/response.APIResponse'
       summary: Check API Health
@@ -270,6 +725,116 @@ paths:
       summary: Update User
       tags:
       - Users
+  /users/{id}/avatar:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload profile picture and update avatar_url for a user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Avatar Image File
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/user.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Upload User Avatar
+      tags:
+      - Users
+  /users/{id}/password:
+    put:
+      consumes:
+      - application/json
+      description: Update user password by verifying the current password
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Change Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Change Password
+      tags:
+      - Users
+  /users/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Request a password reset link to be sent to user email
+      parameters:
+      - description: Forgot Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Forgot Password
+      tags:
+      - Auth
   /users/login:
     post:
       consumes:
@@ -303,6 +868,284 @@ paths:
           schema:
             $ref: '#/definitions/response.APIResponse'
       summary: Login User
+      tags:
+      - Auth
+  /users/login/oauth:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate using social provider ID Token.
+      parameters:
+      - description: OAuth Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.OAuthLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/user.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: OAuth Login User
+      tags:
+      - Auth
+  /users/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidate the active Bearer token by adding it to the blacklist
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout User
+      tags:
+      - Users
+  /users/me:
+    get:
+      description: Fetch details of the currently authenticated session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/user.UserResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Current User Profile
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Modify fields of the currently authenticated profile
+      parameters:
+      - description: Update Profile Fields
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/user.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Current User Profile
+      tags:
+      - Users
+  /users/me/password:
+    put:
+      consumes:
+      - application/json
+      description: Update authenticated user password
+      parameters:
+      - description: Change Password Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Change Current User Password
+      tags:
+      - Users
+  /users/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchange a valid refresh token for a new access token and rotated
+        refresh token
+      parameters:
+      - description: Refresh Token Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/user.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/user.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Refresh Access Token
+      tags:
+      - Auth
+  /users/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password using a valid reset token
+      parameters:
+      - description: Reset Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Reset Password
+      tags:
+      - Auth
+  /users/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: Verify a registered user using the activation token
+      parameters:
+      - description: Verify Email Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.VerifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Verify Email
+      tags:
+      - Auth
+  /users/verify-email/resend:
+    post:
+      consumes:
+      - application/json
+      description: Request a new verification link to be sent to user email
+      parameters:
+      - description: Resend Verification Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.ResendVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Resend Verification Email
       tags:
       - Auth
 securityDefinitions:

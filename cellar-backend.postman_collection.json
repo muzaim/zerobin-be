@@ -1,0 +1,773 @@
+{
+	"info": {
+		"_postman_id": "8b51d8b6-96a8-4c1b-9f88-4db81d6cdb7e",
+		"name": "Cellar Backend API",
+		"description": "Postman Collection for Golang SaaS Starter Kit API with Users & Blogs Modules",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "Checks the health status of the application."
+			},
+			"response": []
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData && jsonData.data && jsonData.data.access_token) {",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.data.access_token);",
+									"}",
+									"if (jsonData && jsonData.data && jsonData.data.user && jsonData.data.user.id) {",
+									"    pm.collectionVariables.set(\"user_id\", jsonData.data.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@cellar.com\",\n  \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"login"
+							]
+						},
+						"description": "Authenticate admin user and automatically set collection variables `access_token` and `user_id`."
+					},
+					"response": []
+				},
+				{
+					"name": "Login (Standard User)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData && jsonData.data && jsonData.data.access_token) {",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.data.access_token);",
+									"}",
+									"if (jsonData && jsonData.data && jsonData.data.user && jsonData.data.user.id) {",
+									"    pm.collectionVariables.set(\"user_id\", jsonData.data.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"usera@cellar.com\",\n  \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"login"
+							]
+						},
+						"description": "Authenticate standard user."
+					},
+					"response": []
+				},
+				{
+					"name": "OAuth Login (Google Mock)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData && jsonData.data && jsonData.data.access_token) {",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.data.access_token);",
+									"}",
+									"if (jsonData && jsonData.data && jsonData.data.user && jsonData.data.user.id) {",
+									"    pm.collectionVariables.set(\"user_id\", jsonData.data.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"provider\": \"google\",\n  \"id_token\": \"mock-token\",\n  \"email\": \"oauth.budi@gmail.com\",\n  \"full_name\": \"Budi OAuth\",\n  \"provider_id\": \"google-user-budi-123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/login/oauth",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"login",
+								"oauth"
+							]
+						},
+						"description": "Log in or register using mock social token. Automatically assigns access_token and user_id variables."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();",
+									"if (response.data && response.data.access_token) {",
+									"    pm.environment.set(\"access_token\", response.data.access_token);",
+									"    pm.environment.set(\"refresh_token\", response.data.refresh_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"refresh"
+							]
+						},
+						"description": "Exchange a refresh token for new access and refresh tokens."
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"usera@cellar.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/forgot-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"forgot-password"
+							]
+						},
+						"description": "Request a password reset link sent to the user email."
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"copy-token-from-mailpit\",\n  \"password\": \"newpassword123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/reset-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"reset-password"
+							]
+						},
+						"description": "Reset user password using a token retrieved from Mailpit email."
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"copy-token-from-mailpit\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/verify-email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"verify-email"
+							]
+						},
+						"description": "Verify registered user using a token from registration email."
+					},
+					"response": []
+				},
+				{
+					"name": "Resend Verification Link",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"johndoe@example.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/verify-email/resend",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"verify-email",
+								"resend"
+							]
+						},
+						"description": "Resend activation email link for unverified email address."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Create User / Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"full_name\": \"John Doe\",\n  \"email\": \"johndoe@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Creates a new user. Can be public for self-registration."
+					},
+					"response": []
+				},
+				{
+					"name": "List Users (Admin Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Retrieve all users from database. Requires admin role."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User By ID (Self/Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Retrieve details of a user by UUID. Enforces ownership (self-access) or Admin access."
+					},
+					"response": []
+				},
+				{
+					"name": "Update User (Self/Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"full_name\": \"John Doe Updated\",\n  \"email\": \"johndoe.updated@example.com\",\n  \"role\": \"user\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Update user details by UUID. Enforces ownership or Admin access."
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password (Self)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"current_password\": \"password\",\n  \"new_password\": \"newpassword123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/{{user_id}}/password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"{{user_id}}",
+								"password"
+							]
+						},
+						"description": "Change user password. Enforces ownership."
+					},
+					"response": []
+				},
+				{
+					"name": "Upload User Avatar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "avatar",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/users/{{user_id}}/avatar",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"{{user_id}}",
+								"avatar"
+							]
+						},
+						"description": "Upload a profile picture for the user. Enforces ownership or admin access."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User (Admin Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Soft-delete a user by UUID. Requires Admin role."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Blogs",
+			"item": [
+				{
+					"name": "List Blogs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/blogs?category=&user_id=&search=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"blogs"
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "",
+									"description": "Education, Guides, Stories, Tips"
+								},
+								{
+									"key": "user_id",
+									"value": "",
+									"description": "Filter by author UUID"
+								},
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search in Title or Slug"
+								}
+							]
+						},
+						"description": "Retrieve all blog posts. Publicly accessible."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Blog By ID or Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/blogs/{{blog_id_or_slug}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"blogs",
+								"{{blog_id_or_slug}}"
+							]
+						},
+						"description": "Retrieve blog post by its UUID or unique slug."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Blog",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData && jsonData.data && jsonData.data.id) {",
+									"    pm.collectionVariables.set(\"blog_id\", jsonData.data.id);",
+									"}",
+									"if (jsonData && jsonData.data && jsonData.data.slug) {",
+									"    pm.collectionVariables.set(\"blog_slug\", jsonData.data.slug);",
+									"    pm.collectionVariables.set(\"blog_id_or_slug\", jsonData.data.slug);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Tips Belajar Golang untuk Pemula\",\n  \"desc\": \"Ini adalah panduan belajar Golang dari nol dengan arsitektur bersih.\",\n  \"category\": \"Education\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/blogs",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"blogs"
+							]
+						},
+						"description": "Create a new blog post. Requires admin role login. Automatically updates collection variables `blog_id` and `blog_slug`."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Blog (Admin Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Tips Belajar Golang Terbaru\",\n  \"desc\": \"Deskripsi yang diperbarui untuk tutorial golang.\",\n  \"category\": \"Guides\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/blogs/{{blog_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"blogs",
+								"{{blog_id}}"
+							]
+						},
+						"description": "Modify an existing blog post by its UUID. Requires admin role login."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Blog (Admin Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/blogs/{{blog_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"blogs",
+								"{{blog_id}}"
+							]
+						},
+						"description": "Delete a blog post by its UUID. Requires admin role login."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "blog_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "blog_slug",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "blog_id_or_slug",
+			"value": "tips-belajar-golang-untuk-pemula",
+			"type": "string"
+		}
+	]
+}

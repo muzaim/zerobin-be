@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -12,6 +13,57 @@ import (
 	gormlogger "gorm.io/gorm/logger"
 )
 
+type txKey struct{}
+
+type TransactionManager interface {
+	RunInTx(ctx context.Context, fn func(ctx context.Context) error) error
+}
+
+type gormTxManager struct {
+	db *gorm.DB
+}
+
+func NewTransactionManager(db *gorm.DB) TransactionManager {
+	return &gormTxManager{db: db}
+}
+
+func (m *gormTxManager) RunInTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	if _, ok := ctx.Value(txKey{}).(*gorm.DB); ok {
+		return fn(ctx)
+	}
+
+	tx := m.db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
+	}()
+
+	ctxWithTx := context.WithValue(ctx, txKey{}, tx)
+	if err := fn(ctxWithTx); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetDB(ctx context.Context, defaultDB *gorm.DB) *gorm.DB {
+	if tx, ok := ctx.Value(txKey{}).(*gorm.DB); ok {
+		return tx.WithContext(ctx)
+	}
+	return defaultDB.WithContext(ctx)
+}
+
 func InitDB(cfg *configs.DBConfig, appEnv string) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
@@ -20,9 +72,7 @@ func InitDB(cfg *configs.DBConfig, appEnv string) (*gorm.DB, error) {
 
 	var gormConfig gorm.Config
 
-	// Adjust GORM logger based on Environment
 	if appEnv == "development" {
-		// Set to gormlogger.Info if you want to see detailed SQL logs
 		gormConfig.Logger = gormlogger.Default.LogMode(gormlogger.Error)
 	} else {
 		gormConfig.Logger = gormlogger.Default.LogMode(gormlogger.Error)
@@ -33,7 +83,6 @@ func InitDB(cfg *configs.DBConfig, appEnv string) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to connect database: %w", err)
 	}
 
-	// Configure connection pool
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve sql.DB: %w", err)
@@ -43,7 +92,6 @@ func InitDB(cfg *configs.DBConfig, appEnv string) (*gorm.DB, error) {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	// Verify connection
 	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}

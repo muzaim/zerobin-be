@@ -6,6 +6,7 @@ import (
 
 	"cellar-backend/configs"
 	"cellar-backend/internal/modules/audit"
+	"cellar-backend/internal/modules/blog"
 	"cellar-backend/internal/modules/user"
 	"cellar-backend/pkg/database"
 	"cellar-backend/pkg/logger"
@@ -14,7 +15,6 @@ import (
 )
 
 func main() {
-	// Initialize configurations
 	cfg, err := configs.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
@@ -22,13 +22,11 @@ func main() {
 
 	logger.InitLogger(cfg.App.Env, cfg.App.LogLevel)
 
-	// Open DB connection
 	db, err := database.InitDB(&cfg.DB, cfg.App.Env)
 	if err != nil {
 		logger.Fatal(err, "Failed to connect to database")
 	}
 
-	// Disable verbose SQL logging for migration command
 	db.Logger = db.Logger.LogMode(gormlogger.Error)
 
 	args := os.Args
@@ -41,8 +39,13 @@ func main() {
 	case "up", "automigrate":
 		logger.Info("Starting database migration (Up)...")
 		err := db.AutoMigrate(
-			&audit.AuditTrail{},
 			&user.User{},
+			&audit.AuditTrail{},
+			&blog.Blog{},
+			&user.UserSocial{},
+			&user.PasswordReset{},
+			&user.EmailVerification{},
+			&user.JWTBlacklist{},
 		)
 		if err != nil {
 			logger.Fatal(err, "Database migration failed")
@@ -52,8 +55,13 @@ func main() {
 	case "rollback":
 		logger.Info("Starting database rollback (Down/Reset)...")
 		err := db.Migrator().DropTable(
-			&user.User{},
+			&user.EmailVerification{},
+			&user.PasswordReset{},
+			&user.UserSocial{},
+			&blog.Blog{},
 			&audit.AuditTrail{},
+			&user.User{},
+			&user.JWTBlacklist{},
 		)
 		if err != nil {
 			logger.Fatal(err, "Database rollback failed")

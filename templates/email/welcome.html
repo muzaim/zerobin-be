@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Welcome to Cellar</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px; }
+        .button { display: inline-block; padding: 10px 20px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 3px; font-weight: bold; }
+        .footer { margin-top: 20px; font-size: 12px; color: #777777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Cellar, {{.FullName}}!</h1>
+        <p>Please click the button below to verify your email address and activate your account:</p>
+        <p style="text-align: center;">
+            <a href="{{.VerificationLink}}" class="button" style="color: #ffffff;">Verify Email</a>
+        </p>
+        <p>Or copy and paste this link into your browser:</p>
+        <p><a href="{{.VerificationLink}}">{{.VerificationLink}}</a></p>
+        <p>This link is valid for 24 hours.</p>
+        <div class="footer">
+            <p>If you did not create an account, please ignore this email.</p>
+        </div>
+    </div>
+</body>
+</html>
