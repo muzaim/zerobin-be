@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"cellar-backend/pkg/apperror"
+	"zerobin-be/pkg/apperror"
 
 	"github.com/gin-gonic/gin"
 )

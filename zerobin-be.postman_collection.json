@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "8b51d8b6-96a8-4c1b-9f88-4db81d6cdb7e",
-		"name": "Cellar Backend API",
+		"name": "Zerobin Backend API",
 		"description": "Postman Collection for Golang SaaS Starter Kit API with Users & Blogs Modules",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -51,7 +51,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"admin@cellar.com\",\n  \"password\": \"password\"\n}",
+							"raw": "{\n  \"email\": \"admin@zerobin.com\",\n  \"password\": \"password\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -96,7 +96,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"usera@cellar.com\",\n  \"password\": \"password\"\n}",
+							"raw": "{\n  \"email\": \"usera@zerobin.com\",\n  \"password\": \"password\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -213,7 +213,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"usera@cellar.com\"\n}",
+							"raw": "{\n  \"email\": \"usera@zerobin.com\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"

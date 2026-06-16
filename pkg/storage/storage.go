@@ -11,6 +11,7 @@ import (
 
 type Storage interface {
 	UploadAvatar(ctx context.Context, filename string, reader io.Reader, size int64, contentType string) (string, error)
+	UploadFile(ctx context.Context, folder string, filename string, reader io.Reader, size int64, contentType string) (string, error)
 }
 
 type minioStorage struct {
@@ -75,6 +76,18 @@ func NewMinIOStorage(endpoint, accessKey, secretKey, bucketName, publicURL strin
 
 func (s *minioStorage) UploadAvatar(ctx context.Context, filename string, reader io.Reader, size int64, contentType string) (string, error) {
 	objectName := "avatars/" + filename
+	_, err := s.client.PutObject(ctx, s.bucketName, objectName, reader, size, minio.PutObjectOptions{
+		ContentType: contentType,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to upload object: %w", err)
+	}
+
+	return fmt.Sprintf("%s/%s", s.publicURL, objectName), nil
+}
+
+func (s *minioStorage) UploadFile(ctx context.Context, folder string, filename string, reader io.Reader, size int64, contentType string) (string, error) {
+	objectName := folder + "/" + filename
 	_, err := s.client.PutObject(ctx, s.bucketName, objectName, reader, size, minio.PutObjectOptions{
 		ContentType: contentType,
 	})

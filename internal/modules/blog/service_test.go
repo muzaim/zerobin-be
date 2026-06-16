@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"cellar-backend/internal/modules/audit"
+	"zerobin-be/internal/modules/audit"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

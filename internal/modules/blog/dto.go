@@ -1,7 +1,7 @@
 package blog
 
 import (
-	"cellar-backend/internal/modules/user"
+	"zerobin-be/internal/modules/user"
 	"time"
 )
 

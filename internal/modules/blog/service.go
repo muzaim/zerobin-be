@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"cellar-backend/internal/modules/audit"
+	"zerobin-be/internal/modules/audit"
 
 	"github.com/google/uuid"
 )

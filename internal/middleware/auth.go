@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"cellar-backend/pkg/apperror"
-	"cellar-backend/pkg/auth"
+	"zerobin-be/pkg/apperror"
+	"zerobin-be/pkg/auth"
 
 	"github.com/gin-gonic/gin"
 )

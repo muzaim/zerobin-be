@@ -1,0 +1,378 @@
+================================================================================
+TUTORIAL MEMBUAT MODUL BARU DARI AWAL
+================================================================================
+
+Panduan ini menjelaskan langkah demi langkah untuk membuat modul baru (misalnya 
+modul "food" untuk makanan) secara mandiri dari awal sampai akhir, mengikuti 
+standar arsitektur backend yang sudah kita bangun.
+
+Arsitektur aplikasi ini menggunakan struktur modular. Semua file terkait satu 
+domain fitur dikelompokkan di dalam folder `internal/modules/<nama_modul>/`.
+
+--------------------------------------------------------------------------------
+LANGKAH 1: BUAT DIRECTORY BARU
+--------------------------------------------------------------------------------
+Buat folder baru untuk modul Anda. Contoh untuk modul "food":
+  `internal/modules/food/`
+
+Di dalam folder tersebut, buatlah 6 file berikut:
+1. `entity.go`      (Skema database GORM)
+2. `dto.go`         (Data Transfer Object untuk request & response)
+3. `repository.go`  (Akses data langsung ke database)
+4. `service.go`     (Logika bisnis aplikasi / use-cases)
+5. `handler.go`     (HTTP controller / Gin context processor)
+6. `router.go`      (Mapping endpoint / HTTP routes)
+
+--------------------------------------------------------------------------------
+LANGKAH 2: TULIS KODE STRUKTUR MODUL
+--------------------------------------------------------------------------------
+
+Berikut adalah contoh isi kode boilerplate untuk setiap file:
+
+--- 1. entity.go ---
+Definisikan skema tabel database GORM. Hubungkan dengan `entities.Base` agar
+otomatis memiliki ID (UUID), CreatedAt, UpdatedAt, dan DeletedAt (Soft Delete).
+
+```go
+package food
+
+import (
+	"zerobin-be/internal/entities"
+	"zerobin-be/internal/modules/asset"
+	"github.com/google/uuid"
+)
+
+type Food struct {
+	entities.Base
+	Name        string       `gorm:"type:varchar(100);not null" json:"name"`
+	Price       float64      `gorm:"type:decimal(10,2);not null" json:"price"`
+	Description string       `gorm:"type:text" json:"description"`
+	ImageID     *uuid.UUID   `gorm:"type:uuid" json:"image_id"`
+	Image       *asset.Asset `gorm:"foreignKey:ImageID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"image"`
+}
+
+func (Food) TableName() string {
+	return "mst_foods" // Prefiks mst_ untuk master data
+}
+```
+
+--- 2. dto.go ---
+Definisikan payload input (request) dan output (response). Gunakan tag validator
+seperti `validate:"required"` untuk mempermudah validasi input.
+
+```go
+package food
+
+import "time"
+
+type CreateFoodRequest struct {
+	Name        string  `json:"name" validate:"required,min=3"`
+	Price       float64 `json:"price" validate:"required,gt=0"`
+	Description string  `json:"description"`
+	ImageID     string  `json:"image_id"`
+}
+
+type FoodResponse struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Price       float64   `json:"price"`
+	Description string    `json:"description"`
+	ImageURL    string    `json:"image_url,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+func ToFoodResponse(f *Food) FoodResponse {
+	imageURL := ""
+	if f.Image != nil {
+		imageURL = f.Image.FileURL
+	}
+	return FoodResponse{
+		ID:          f.ID.String(),
+		Name:        f.Name,
+		Price:       f.Price,
+		Description: f.Description,
+		ImageURL:    imageURL,
+		CreatedAt:   f.CreatedAt,
+	}
+}
+
+func ToFoodResponses(foods []Food) []FoodResponse {
+	res := make([]FoodResponse, len(foods))
+	for i, f := range foods {
+		res[i] = ToFoodResponse(&f)
+	}
+	return res
+}
+```
+
+--- 3. repository.go ---
+Tempat interaksi query database langsung menggunakan GORM.
+PENTING: Selalu gunakan helper `database.GetDB(ctx, r.db)` agar modul ini
+mendukung pengelolaan transaksi (ACID) secara otomatis.
+
+```go
+package food
+
+import (
+	"context"
+	"zerobin-be/pkg/database"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+type Repository interface {
+	Create(ctx context.Context, f *Food) error
+	FindByID(ctx context.Context, id uuid.UUID) (*Food, error)
+	FindAll(ctx context.Context) ([]Food, error)
+}
+
+type repository struct {
+	db *gorm.DB
+}
+
+func NewRepository(db *gorm.DB) Repository {
+	return &repository{db: db}
+}
+
+func (r *repository) Create(ctx context.Context, f *Food) error {
+	return database.GetDB(ctx, r.db).Create(f).Error
+}
+
+func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*Food, error) {
+	var f Food
+	err := database.GetDB(ctx, r.db).Preload("Image").First(&f, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &f, nil
+}
+
+func (r *repository) FindAll(ctx context.Context) ([]Food, error) {
+	var foods []Food
+	err := database.GetDB(ctx, r.db).Preload("Image").Find(&foods).Error
+	return foods, err
+}
+```
+
+--- 4. service.go ---
+Logika bisnis utama (use-case). Jika ada operasi multi-statement (menulis data 
+ke beberapa tabel sekaligus), bungkus logika tersebut dengan `s.txManager.RunInTx`.
+
+```go
+package food
+
+import (
+	"context"
+	"errors"
+	"zerobin-be/pkg/database"
+	"github.com/google/uuid"
+)
+
+type Service interface {
+	CreateFood(ctx context.Context, req *CreateFoodRequest) (*FoodResponse, error)
+	GetFoodByID(ctx context.Context, id uuid.UUID) (*FoodResponse, error)
+	GetAllFoods(ctx context.Context) ([]FoodResponse, error)
+}
+
+type service struct {
+	repo      Repository
+	txManager database.TransactionManager
+}
+
+func NewService(repo Repository, txManager database.TransactionManager) Service {
+	return &service{
+		repo:      repo,
+		txManager: txManager,
+	}
+}
+
+func (s *service) CreateFood(ctx context.Context, req *CreateFoodRequest) (*FoodResponse, error) {
+	var imgUUID *uuid.UUID
+	if req.ImageID != "" {
+		parsed, err := uuid.Parse(req.ImageID)
+		if err == nil {
+			imgUUID = &parsed
+		}
+	}
+
+	f := &Food{
+		Name:        req.Name,
+		Price:       req.Price,
+		Description: req.Description,
+		ImageID:     imgUUID,
+	}
+
+	// Contoh jika ingin dibungkus transaksi (opsional untuk single write, wajib untuk multi-write)
+	err := s.txManager.RunInTx(ctx, func(txCtx context.Context) error {
+		return s.repo.Create(txCtx, f)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Ambil ulang data lengkap untuk preload gambar
+	loaded, err := s.repo.FindByID(ctx, f.ID)
+	if err == nil {
+		f = loaded
+	}
+
+	res := ToFoodResponse(f)
+	return &res, nil
+}
+
+func (s *service) GetFoodByID(ctx context.Context, id uuid.UUID) (*FoodResponse, error) {
+	f, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, errors.New("food item not found")
+	}
+	res := ToFoodResponse(f)
+	return &res, nil
+}
+
+func (s *service) GetAllFoods(ctx context.Context) ([]FoodResponse, error) {
+	foods, err := s.repo.FindAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ToFoodResponses(foods), nil
+}
+```
+
+--- 5. handler.go ---
+Menangani protokol HTTP (Gin). Mengurai payload JSON, memanggil validator, 
+dan mengembalikan format response seragam. Jika ada error, teruskan ke 
+`c.Error(err)` untuk ditangani terpusat oleh Error Handler middleware.
+
+```go
+package food
+
+import (
+	"net/http"
+	"zerobin-be/pkg/apperror"
+	"zerobin-be/pkg/response"
+	"zerobin-be/pkg/validator"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+)
+
+type Handler struct {
+	service Service
+}
+
+func NewHandler(service Service) *Handler {
+	return &Handler{service: service}
+}
+
+func (h *Handler) Create(c *gin.Context) {
+	var req CreateFoodRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(apperror.NewValidationError(err.Error()))
+		return
+	}
+
+	if errs := validator.ValidateStruct(req); len(errs) > 0 {
+		c.Error(apperror.NewValidationError(errs[0].Message))
+		return
+	}
+
+	res, err := h.service.CreateFood(c.Request.Context(), &req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusCreated, "Food created successfully", res)
+}
+
+func (h *Handler) GetByID(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.Error(apperror.NewBadRequestError("Invalid ID format"))
+		return
+	}
+
+	res, err := h.service.GetFoodByID(c.Request.Context(), id)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Food retrieved successfully", res)
+}
+
+func (h *Handler) GetAll(c *gin.Context) {
+	res, err := h.service.GetAllFoods(c.Request.Context())
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Foods retrieved successfully", res)
+}
+```
+
+--- 6. router.go ---
+Definisikan endpoint API dan daftarkan middleware otorisasi (JWT / RBAC Casbin)
+serta logger audit jika diperlukan.
+
+```go
+package food
+
+import (
+	"zerobin-be/internal/middleware"
+	"zerobin-be/pkg/auth"
+	"github.com/gin-gonic/gin"
+)
+
+func RegisterRoutes(rg *gin.RouterGroup, h *Handler, jwtSvc *auth.JWTService) {
+	foods := rg.Group("/foods")
+	{
+		// Publik
+		foods.GET("", h.GetAll)
+		foods.GET("/:id", h.GetByID)
+
+		// Memerlukan Auth
+		foods.Use(middleware.Auth(jwtSvc))
+		foods.POST("", middleware.Audit("food", "create_food"), h.Create)
+	}
+}
+```
+
+--------------------------------------------------------------------------------
+LANGKAH 3: DAFTARKAN DI BOOTSTRAP WIRING (MAIN)
+--------------------------------------------------------------------------------
+Setelah file modul siap, Anda perlu mendaftarkannya di dua lokasi utama:
+
+1. `cmd/migrate/main.go` (Migrator CLI)
+   - Daftarkan `&food.Food{}` ke dalam fungsi `db.AutoMigrate` pada case `"up"` / `"automigrate"`.
+   - Daftarkan `&food.Food{}` ke dalam fungsi `db.Migrator().DropTable` pada case `"rollback"`.
+
+2. `cmd/api/main.go` (API Server utama)
+   - Daftarkan `&food.Food{}` ke dalam fungsi `db.AutoMigrate`.
+   - Inisialisasi dependency di bagian bawah:
+     ```go
+     foodRepo := food.NewRepository(db)
+     foodServ := food.NewService(foodRepo, txManager)
+     foodHandler := food.NewHandler(foodServ)
+     ```
+   - Daftarkan routing-nya:
+     ```go
+     food.RegisterRoutes(v1, foodHandler, jwtService)
+     ```
+
+--------------------------------------------------------------------------------
+LANGKAH 4: JALANKAN MIGRATION & TES KODE
+--------------------------------------------------------------------------------
+1. Lakukan reset/update database dengan CLI migrasi:
+   `go run cmd/migrate/main.go rollback`
+   `go run cmd/migrate/main.go up`
+
+2. Pastikan program tidak ada error kompilasi dan jalankan unit test:
+   `go test ./...`
+
+3. Jalankan server lokal:
+   `go run cmd/api/main.go`
+
+Modul baru Anda kini sudah aktif dan siap melayani HTTP request secara aman!
+================================================================================

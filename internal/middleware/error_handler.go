@@ -3,8 +3,8 @@ package middleware
 import (
 	"net/http"
 
-	"cellar-backend/pkg/apperror"
-	"cellar-backend/pkg/response"
+	"zerobin-be/pkg/apperror"
+	"zerobin-be/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"

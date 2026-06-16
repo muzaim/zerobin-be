@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"cellar-backend/pkg/response"
+	"zerobin-be/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"

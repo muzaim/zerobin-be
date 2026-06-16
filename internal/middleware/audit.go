@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"cellar-backend/internal/modules/audit"
+	"zerobin-be/internal/modules/audit"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

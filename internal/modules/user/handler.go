@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"strings"
 
-	"cellar-backend/internal/middleware"
-	"cellar-backend/pkg/apperror"
-	"cellar-backend/pkg/auth"
-	"cellar-backend/pkg/response"
-	"cellar-backend/pkg/validator"
+	"zerobin-be/internal/middleware"
+	"zerobin-be/pkg/apperror"
+	"zerobin-be/pkg/auth"
+	"zerobin-be/pkg/response"
+	"zerobin-be/pkg/validator"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"cellar-backend/configs"
+	"zerobin-be/configs"
 
 	"github.com/golang-jwt/jwt/v5"
 )

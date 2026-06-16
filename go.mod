@@ -1,4 +1,4 @@
-module cellar-backend
+module zerobin-be
 
 go 1.25.2
 

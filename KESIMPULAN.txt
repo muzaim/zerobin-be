@@ -100,4 +100,13 @@ dan mudah dipelihara (maintainable), pondasi berikut telah diimplementasikan:
    - Background Database Cleanup Worker: Go-routine background worker untuk 
      membersihkan token kedaluwarsa dan blacklist JWT secara berkala.
 
+7. Sistem Aset Terpusat (Centralized Asset Management)
+   - Memindahkan penyimpanan metadata file upload (avatar, foto makanan, dll) 
+     dari kolom teks mentah di tabel masing-masing entity ke tabel terpusat `sys_assets`.
+   - Menggunakan relasi kunci asing (Foreign Key `avatar_id` di tabel user) 
+     untuk menghubungkan entity ke tabel aset.
+   - Mendukung modularitas tinggi, skalabilitas, dan penggunaan kembali (reuse) 
+     aset di berbagai modul bisnis (seperti transaksi makanan, produk, dll) 
+     tanpa duplikasi logika unggah/penyimpanan.
+
 ================================================================================

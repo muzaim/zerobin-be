@@ -3,19 +3,21 @@ package user
 import (
 	"time"
 
-	"cellar-backend/internal/entities"
+	"zerobin-be/internal/entities"
+	"zerobin-be/internal/modules/asset"
 
 	"github.com/google/uuid"
 )
 
 type User struct {
 	entities.Base
-	FullName   string `gorm:"type:varchar(100);not null" json:"full_name"`
-	Email      string `gorm:"type:varchar(100);uniqueIndex;not null" json:"email"`
-	Password   string `gorm:"type:varchar(255)" json:"-"`
-	Role       string `gorm:"type:varchar(50);default:'user';index;not null" json:"role"`
-	AvatarURL  string `gorm:"type:varchar(255)" json:"avatar_url"`
-	IsVerified bool   `gorm:"default:false;not null" json:"is_verified"`
+	FullName   string       `gorm:"type:varchar(100);not null" json:"full_name"`
+	Email      string       `gorm:"type:varchar(100);uniqueIndex;not null" json:"email"`
+	Password   string       `gorm:"type:varchar(255)" json:"-"`
+	Role       string       `gorm:"type:varchar(50);default:'user';index;not null" json:"role"`
+	AvatarID   *uuid.UUID   `gorm:"type:uuid" json:"avatar_id,omitempty"`
+	Avatar     *asset.Asset `gorm:"foreignKey:AvatarID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"avatar,omitempty"`
+	IsVerified bool         `gorm:"default:false;not null" json:"is_verified"`
 }
 
 func (User) TableName() string {

@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"cellar-backend/pkg/database"
+	"zerobin-be/pkg/database"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -42,13 +42,13 @@ func (r *repository) Create(ctx context.Context, u *User) error {
 
 func (r *repository) FindAll(ctx context.Context) ([]User, error) {
 	var users []User
-	err := database.GetDB(ctx, r.db).Find(&users).Error
+	err := database.GetDB(ctx, r.db).Preload("Avatar").Find(&users).Error
 	return users, err
 }
 
 func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	var u User
-	err := database.GetDB(ctx, r.db).First(&u, "id = ?", id).Error
+	err := database.GetDB(ctx, r.db).Preload("Avatar").First(&u, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*User, error) 
 
 func (r *repository) FindByEmail(ctx context.Context, email string) (*User, error) {
 	var u User
-	err := database.GetDB(ctx, r.db).First(&u, "email = ?", email).Error
+	err := database.GetDB(ctx, r.db).Preload("Avatar").First(&u, "email = ?", email).Error
 	if err != nil {
 		return nil, err
 	}

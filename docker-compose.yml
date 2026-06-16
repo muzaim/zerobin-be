@@ -3,12 +3,12 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: cellar_postgres
+    container_name: zerobin_postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cellar
+      POSTGRES_DB: zerobin
     ports:
       - "5432:5432"
     volumes:
@@ -16,10 +16,10 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: cellar_pgadmin
+    container_name: zerobin_pgadmin
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@cellar.com
+      PGADMIN_DEFAULT_EMAIL: admin@zerobin.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
@@ -28,7 +28,7 @@ services:
 
   minio:
     image: minio/minio:latest
-    container_name: cellar_minio
+    container_name: zerobin_minio
     restart: always
     ports:
       - "9000:9000"
@@ -42,7 +42,7 @@ services:
 
   mailpit:
     image: axllent/mailpit:latest
-    container_name: cellar_mailpit
+    container_name: zerobin_mailpit
     restart: always
     ports:
       - "1025:1025"

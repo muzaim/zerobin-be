@@ -3,9 +3,9 @@ package blog
 import (
 	"net/http"
 
-	"cellar-backend/internal/middleware"
-	"cellar-backend/pkg/response"
-	"cellar-backend/pkg/validator"
+	"zerobin-be/internal/middleware"
+	"zerobin-be/pkg/response"
+	"zerobin-be/pkg/validator"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

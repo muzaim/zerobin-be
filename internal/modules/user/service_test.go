@@ -8,10 +8,11 @@ import (
 	"io"
 	"strings"
 
-	"cellar-backend/configs"
-	"cellar-backend/internal/entities"
-	"cellar-backend/internal/modules/audit"
-	"cellar-backend/pkg/auth"
+	"zerobin-be/configs"
+	"zerobin-be/internal/entities"
+	"zerobin-be/internal/modules/asset"
+	"zerobin-be/internal/modules/audit"
+	"zerobin-be/pkg/auth"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -142,6 +143,11 @@ func (m *MockStorage) UploadAvatar(ctx context.Context, filename string, reader 
 	return args.String(0), args.Error(1)
 }
 
+func (m *MockStorage) UploadFile(ctx context.Context, folder string, filename string, reader io.Reader, size int64, contentType string) (string, error) {
+	args := m.Called(ctx, folder, filename, reader, size, contentType)
+	return args.String(0), args.Error(1)
+}
+
 type MockEmailService struct {
 	mock.Mock
 }
@@ -169,6 +175,31 @@ func (m *MockTransactionManager) RunInTx(ctx context.Context, fn func(ctx contex
 	return fn(ctx)
 }
 
+type MockAssetService struct {
+	mock.Mock
+}
+
+func (m *MockAssetService) Upload(ctx context.Context, filename string, folder string, reader io.Reader, size int64, contentType string, uploadedByID *uuid.UUID) (*asset.Asset, error) {
+	args := m.Called(ctx, filename, folder, reader, size, contentType, uploadedByID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) GetByID(ctx context.Context, id uuid.UUID) (*asset.Asset, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) Delete(ctx context.Context, id uuid.UUID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
 func TestService_CreateUser(t *testing.T) {
 	repo := new(MockUserRepository)
 	auditSvc := new(MockAuditService)
@@ -180,8 +211,9 @@ func TestService_CreateUser(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
+	assetSvc := new(MockAssetService)
 
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 
 	t.Run("success", func(t *testing.T) {
@@ -241,8 +273,9 @@ func TestService_Login(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
+	assetSvc := new(MockAssetService)
 
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 
 	hashedPassword, _ := auth.HashPassword("correctpassword")
@@ -329,8 +362,9 @@ func TestService_OAuthLogin(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
+	assetSvc := new(MockAssetService)
 
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 
 	t.Run("success with existing social login", func(t *testing.T) {
@@ -432,7 +466,8 @@ func TestService_UpdateAvatar(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	assetSvc := new(MockAssetService)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 	userID := uuid.New()
 
@@ -443,17 +478,22 @@ func TestService_UpdateAvatar(t *testing.T) {
 		}
 		dbUser.ID = userID
 
+		mockAsset := &asset.Asset{
+			FileURL: "http://localhost:9000/zerobin-avatars/avatars/"+userID.String()+".png",
+		}
+		mockAsset.ID = uuid.New()
+
 		repo.On("FindByID", ctx, userID).Return(dbUser, nil).Once()
-		storageSvc.On("UploadAvatar", ctx, userID.String()+".png", mock.Anything, int64(10), "image/png").Return("http://localhost:9000/cellar-avatars/avatars/"+userID.String()+".png", nil).Once()
+		assetSvc.On("Upload", ctx, userID.String()+".png", "avatars", mock.Anything, int64(10), "image/png", &userID).Return(mockAsset, nil).Once()
 		repo.On("Update", ctx, mock.AnythingOfType("*user.User")).Return(nil).Once()
 
 		res, err := svc.UpdateAvatar(ctx, userID, strings.NewReader("test-data"), 10, "image/png")
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
-		assert.Equal(t, "http://localhost:9000/cellar-avatars/avatars/"+userID.String()+".png", res.AvatarURL)
+		assert.Equal(t, "http://localhost:9000/zerobin-avatars/avatars/"+userID.String()+".png", res.AvatarURL)
 
 		repo.AssertExpectations(t)
-		storageSvc.AssertExpectations(t)
+		assetSvc.AssertExpectations(t)
 	})
 }
 
@@ -468,7 +508,8 @@ func TestService_RefreshToken(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	assetSvc := new(MockAssetService)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 
 	t.Run("success", func(t *testing.T) {
@@ -522,7 +563,8 @@ func TestService_ChangePassword(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	assetSvc := new(MockAssetService)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 	userID := uuid.New()
 
@@ -574,7 +616,8 @@ func TestService_ForgotPassword(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	assetSvc := new(MockAssetService)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 
 	dbUser := &User{
@@ -623,7 +666,8 @@ func TestService_ResetPassword(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	assetSvc := new(MockAssetService)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 
 	resetToken := "some-token"
@@ -689,7 +733,8 @@ func TestService_VerifyEmail(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	assetSvc := new(MockAssetService)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 
 	token := "verify-token"
@@ -754,7 +799,8 @@ func TestService_ResendVerification(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	assetSvc := new(MockAssetService)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 
 	email := "resend@example.com"
@@ -811,7 +857,8 @@ func TestService_Logout(t *testing.T) {
 	storageSvc := new(MockStorage)
 	emailSvc := new(MockEmailService)
 	txManager := new(MockTransactionManager)
-	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager)
+	assetSvc := new(MockAssetService)
+	svc := NewService(repo, auditSvc, jwtSvc, storageSvc, emailSvc, txManager, assetSvc)
 	ctx := context.Background()
 
 	t.Run("success", func(t *testing.T) {

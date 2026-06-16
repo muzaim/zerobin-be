@@ -1,8 +1,8 @@
 package blog
 
 import (
-	"cellar-backend/internal/entities"
-	"cellar-backend/internal/modules/user"
+	"zerobin-be/internal/entities"
+	"zerobin-be/internal/modules/user"
 
 	"github.com/google/uuid"
 )

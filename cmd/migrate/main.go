@@ -4,12 +4,13 @@ import (
 	"log"
 	"os"
 
-	"cellar-backend/configs"
-	"cellar-backend/internal/modules/audit"
-	"cellar-backend/internal/modules/blog"
-	"cellar-backend/internal/modules/user"
-	"cellar-backend/pkg/database"
-	"cellar-backend/pkg/logger"
+	"zerobin-be/configs"
+	"zerobin-be/internal/modules/asset"
+	"zerobin-be/internal/modules/audit"
+	"zerobin-be/internal/modules/blog"
+	"zerobin-be/internal/modules/user"
+	"zerobin-be/pkg/database"
+	"zerobin-be/pkg/logger"
 
 	gormlogger "gorm.io/gorm/logger"
 )
@@ -39,6 +40,7 @@ func main() {
 	case "up", "automigrate":
 		logger.Info("Starting database migration (Up)...")
 		err := db.AutoMigrate(
+			&asset.Asset{},
 			&user.User{},
 			&audit.AuditTrail{},
 			&blog.Blog{},
@@ -62,6 +64,7 @@ func main() {
 			&audit.AuditTrail{},
 			&user.User{},
 			&user.JWTBlacklist{},
+			&asset.Asset{},
 		)
 		if err != nil {
 			logger.Fatal(err, "Database rollback failed")

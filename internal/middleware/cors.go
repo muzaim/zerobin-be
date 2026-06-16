@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"cellar-backend/configs"
+	"zerobin-be/configs"
 
 	"github.com/gin-gonic/gin"
 )

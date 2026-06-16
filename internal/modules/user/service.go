@@ -11,11 +11,12 @@ import (
 	"net/http"
 	"time"
 
-	"cellar-backend/internal/modules/audit"
-	"cellar-backend/pkg/auth"
-	"cellar-backend/pkg/database"
-	"cellar-backend/pkg/email"
-	"cellar-backend/pkg/storage"
+	"zerobin-be/internal/modules/asset"
+	"zerobin-be/internal/modules/audit"
+	"zerobin-be/pkg/auth"
+	"zerobin-be/pkg/database"
+	"zerobin-be/pkg/email"
+	"zerobin-be/pkg/storage"
 
 	"github.com/google/uuid"
 )
@@ -45,9 +46,10 @@ type service struct {
 	storage    storage.Storage
 	emailSvc   email.Service
 	txManager  database.TransactionManager
+	assetSvc   asset.Service
 }
 
-func NewService(repo Repository, auditServ audit.Service, jwtService *auth.JWTService, storage storage.Storage, emailSvc email.Service, txManager database.TransactionManager) Service {
+func NewService(repo Repository, auditServ audit.Service, jwtService *auth.JWTService, storage storage.Storage, emailSvc email.Service, txManager database.TransactionManager, assetSvc asset.Service) Service {
 	return &service{
 		repo:       repo,
 		auditServ:  auditServ,
@@ -55,6 +57,7 @@ func NewService(repo Repository, auditServ audit.Service, jwtService *auth.JWTSe
 		storage:    storage,
 		emailSvc:   emailSvc,
 		txManager:  txManager,
+		assetSvc:   assetSvc,
 	}
 }
 
@@ -354,14 +357,15 @@ func (s *service) UpdateAvatar(ctx context.Context, id uuid.UUID, reader io.Read
 	}
 
 	filename := fmt.Sprintf("%s%s", id.String(), ext)
-	avatarURL, err := s.storage.UploadAvatar(ctx, filename, reader, size, contentType)
+	newAsset, err := s.assetSvc.Upload(ctx, filename, "avatars", reader, size, contentType, &id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload avatar: %w", err)
 	}
 
-	u.AvatarURL = avatarURL
+	u.AvatarID = &newAsset.ID
+	u.Avatar = newAsset
 	if err := s.repo.Update(ctx, u); err != nil {
-		return nil, fmt.Errorf("failed to update user avatar url: %w", err)
+		return nil, fmt.Errorf("failed to update user avatar: %w", err)
 	}
 
 	res := ToUserResponse(u)

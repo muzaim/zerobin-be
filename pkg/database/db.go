@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"cellar-backend/configs"
-	"cellar-backend/pkg/logger"
+	"zerobin-be/configs"
+	"zerobin-be/pkg/logger"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

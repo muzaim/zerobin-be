@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"cellar-backend/pkg/response"
+	"zerobin-be/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )

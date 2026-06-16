@@ -74,14 +74,14 @@ func LoadConfig() (*Config, error) {
 
 	viper.SetDefault("APP_ENV", "development")
 	viper.SetDefault("APP_PORT", "8080")
-	viper.SetDefault("APP_NAME", "cellar-backend")
+	viper.SetDefault("APP_NAME", "zerobin-be")
 	viper.SetDefault("LOG_LEVEL", "info")
 
 	viper.SetDefault("DB_HOST", "localhost")
 	viper.SetDefault("DB_PORT", "5432")
 	viper.SetDefault("DB_USER", "postgres")
 	viper.SetDefault("DB_PASSWORD", "postgres")
-	viper.SetDefault("DB_NAME", "cellar")
+	viper.SetDefault("DB_NAME", "zerobin")
 	viper.SetDefault("DB_SSLMODE", "disable")
 	viper.SetDefault("AUTO_MIGRATE", "true")
 
@@ -95,14 +95,14 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("MINIO_ACCESS_KEY", "minioadmin")
 	viper.SetDefault("MINIO_SECRET_KEY", "minioadmin")
 	viper.SetDefault("MINIO_USE_SSL", "false")
-	viper.SetDefault("MINIO_BUCKET_NAME", "cellar-avatars")
-	viper.SetDefault("MINIO_PUBLIC_URL", "http://localhost:9000/cellar-avatars")
+	viper.SetDefault("MINIO_BUCKET_NAME", "zerobin-avatars")
+	viper.SetDefault("MINIO_PUBLIC_URL", "http://localhost:9000/zerobin-avatars")
 
 	viper.SetDefault("SMTP_HOST", "localhost")
 	viper.SetDefault("SMTP_PORT", 1025)
 	viper.SetDefault("SMTP_USER", "")
 	viper.SetDefault("SMTP_PASSWORD", "")
-	viper.SetDefault("SMTP_SENDER", "noreply@cellar.com")
+	viper.SetDefault("SMTP_SENDER", "noreply@zerobin.com")
 
 	// Read environment variables
 	viper.AutomaticEnv()

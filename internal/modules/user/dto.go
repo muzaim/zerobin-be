@@ -40,12 +40,17 @@ type UserResponse struct {
 }
 
 func ToUserResponse(u *User) UserResponse {
+	avatarURL := ""
+	if u.Avatar != nil {
+		avatarURL = u.Avatar.FileURL
+	}
+
 	return UserResponse{
 		ID:         u.ID.String(),
 		FullName:   u.FullName,
 		Email:      u.Email,
 		Role:       u.Role,
-		AvatarURL:  u.AvatarURL,
+		AvatarURL:  avatarURL,
 		IsVerified: u.IsVerified,
 		CreatedAt:  u.CreatedAt,
 		UpdatedAt:  u.UpdatedAt,

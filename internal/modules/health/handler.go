@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"cellar-backend/pkg/response"
+	"zerobin-be/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

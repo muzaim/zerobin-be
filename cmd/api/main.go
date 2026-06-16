@@ -10,19 +10,20 @@ import (
 	"syscall"
 	"time"
 
-	"cellar-backend/configs"
-	_ "cellar-backend/docs"
-	"cellar-backend/internal/middleware"
-	"cellar-backend/internal/modules/audit"
-	"cellar-backend/internal/modules/health"
-	"cellar-backend/internal/modules/blog"
-	"cellar-backend/internal/modules/user"
-	"cellar-backend/internal/worker"
-	"cellar-backend/pkg/auth"
-	"cellar-backend/pkg/database"
-	"cellar-backend/pkg/email"
-	"cellar-backend/pkg/logger"
-	"cellar-backend/pkg/storage"
+	"zerobin-be/configs"
+	_ "zerobin-be/docs"
+	"zerobin-be/internal/middleware"
+	"zerobin-be/internal/modules/asset"
+	"zerobin-be/internal/modules/audit"
+	"zerobin-be/internal/modules/health"
+	"zerobin-be/internal/modules/blog"
+	"zerobin-be/internal/modules/user"
+	"zerobin-be/internal/worker"
+	"zerobin-be/pkg/auth"
+	"zerobin-be/pkg/database"
+	"zerobin-be/pkg/email"
+	"zerobin-be/pkg/logger"
+	"zerobin-be/pkg/storage"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -65,6 +66,7 @@ func main() {
 	if cfg.DB.AutoMigrate {
 		logger.Info("Auto-migration enabled. Running migrations...")
 		err = db.AutoMigrate(
+			&asset.Asset{},
 			&user.User{},
 			&audit.AuditTrail{},
 			&blog.Blog{},
@@ -126,9 +128,11 @@ func main() {
 	emailServ := email.NewEmailService(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.User, cfg.SMTP.Password, cfg.SMTP.Sender)
 
 	txManager := database.NewTransactionManager(db)
+	assetRepo := asset.NewRepository(db)
+	assetServ := asset.NewService(assetRepo, storageServ)
 	userRepo := user.NewRepository(db)
 	middleware.RegisterBlacklistChecker(userRepo)
-	userServ := user.NewService(userRepo, auditServ, jwtService, storageServ, emailServ, txManager)
+	userServ := user.NewService(userRepo, auditServ, jwtService, storageServ, emailServ, txManager, assetServ)
 
 	blogRepo := blog.NewRepository(db)
 	blogServ := blog.NewService(blogRepo, auditServ)

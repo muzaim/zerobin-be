@@ -60,7 +60,7 @@ Start the PostgreSQL container:
 ```bash
 make docker-up
 ```
-*Note: A PgAdmin instance is also spun up at `http://localhost:5050` (credentials: `admin@cellar.com` / `admin`).*
+*Note: A PgAdmin instance is also spun up at `http://localhost:5050` (credentials: `admin@zerobin.com` / `admin`).*
 
 ### 3. Run Database Migrations & Seeders
 Create the database schema and populate it with initial seed users (Admin and Standard Users):
@@ -92,7 +92,7 @@ Once the server is running, access the interactive Swagger UI at:
 ## Core Features & Examples
 
 ### 1. Reusable Ownership Middleware
-In [internal/middleware/ownership.go](file:///Users/syafrisurya/project/belajar/cellar-backend/internal/middleware/ownership.go), we provide a reusable middleware:
+In [internal/middleware/ownership.go](file:///Users/syafrisurya/project/belajar/zerobin-be/internal/middleware/ownership.go), we provide a reusable middleware:
 ```go
 middleware.AuthorizeOwnership("id", middleware.UserSelfProvider)
 ```
@@ -105,7 +105,7 @@ s.auditServ.Record(operatorID, "User", "Create", "Created user test@example.com"
 ```
 
 ### 3. Casbin RBAC Policies
-Role-based route permissions are defined in [configs/rbac_policy.csv](file:///Users/syafrisurya/project/belajar/cellar-backend/configs/rbac_policy.csv). Modify this file to add/remove role access control paths dynamically.
+Role-based route permissions are defined in [configs/rbac_policy.csv](file:///Users/syafrisurya/project/belajar/zerobin-be/configs/rbac_policy.csv). Modify this file to add/remove role access control paths dynamically.
 
 ---
 

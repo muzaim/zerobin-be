@@ -1,9 +1,9 @@
 package blog
 
 import (
-	"cellar-backend/internal/middleware"
-	"cellar-backend/internal/modules/audit"
-	"cellar-backend/pkg/auth"
+	"zerobin-be/internal/middleware"
+	"zerobin-be/internal/modules/audit"
+	"zerobin-be/pkg/auth"
 
 	"github.com/gin-gonic/gin"
 )

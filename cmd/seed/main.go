@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 
-	"cellar-backend/configs"
-	"cellar-backend/internal/modules/user"
-	"cellar-backend/pkg/auth"
-	"cellar-backend/pkg/database"
-	"cellar-backend/pkg/logger"
+	"zerobin-be/configs"
+	"zerobin-be/internal/modules/user"
+	"zerobin-be/pkg/auth"
+	"zerobin-be/pkg/database"
+	"zerobin-be/pkg/logger"
 
 	gormlogger "gorm.io/gorm/logger"
 )
@@ -37,21 +37,21 @@ func main() {
 	seedUsers := []user.User{
 		{
 			FullName:   "System Admin",
-			Email:      "admin@cellar.com",
+			Email:      "admin@zerobin.com",
 			Password:   string(hashedPassword),
 			Role:       "admin",
 			IsVerified: true,
 		},
 		{
 			FullName:   "Standard User A",
-			Email:      "usera@cellar.com",
+			Email:      "usera@zerobin.com",
 			Password:   string(hashedPassword),
 			Role:       "user",
 			IsVerified: true,
 		},
 		{
 			FullName:   "Standard User B",
-			Email:      "userb@cellar.com",
+			Email:      "userb@zerobin.com",
 			Password:   string(hashedPassword),
 			Role:       "user",
 			IsVerified: true,

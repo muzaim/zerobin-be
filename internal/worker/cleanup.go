@@ -3,7 +3,7 @@ package worker
 import (
 	"time"
 
-	"cellar-backend/pkg/logger"
+	"zerobin-be/pkg/logger"
 
 	"gorm.io/gorm"
 )
